@@ -29,6 +29,11 @@ class ApiService {
     ));
   }
 
+  Future<void> updateBaseUrl(String newBaseUrl) async {
+    await ApiConfig.setBaseUrl(newBaseUrl);
+    _dio.options.baseUrl = newBaseUrl;
+  }
+
   String _handleError(DioException error) {
     // Check for CORS errors
     final errorMessage = error.message?.toLowerCase() ?? '';

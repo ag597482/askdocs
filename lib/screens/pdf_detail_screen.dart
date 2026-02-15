@@ -277,17 +277,34 @@ class _PDFDetailScreenState extends State<PDFDetailScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          Slider(
-            value: (_selectedPageNumber ?? 1).toDouble(),
-            min: 1,
-            max: widget.pdf.totalPages.toDouble(),
-            divisions: widget.pdf.totalPages - 1,
-            label: 'Page ${_selectedPageNumber ?? 1}',
-            onChanged: (value) {
-              setState(() {
-                _selectedPageNumber = value.toInt();
-              });
-            },
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              // Make active and inactive track the same color (no progress fill)
+              activeTrackColor: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              inactiveTrackColor: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+              // Make the thumb stand out as the position indicator
+              thumbColor: Theme.of(context).colorScheme.primary,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              overlayColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+              // Show tick marks for each page
+              tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 3),
+              activeTickMarkColor: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              inactiveTickMarkColor: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              trackHeight: 4,
+            ),
+            child: Slider(
+              value: (_selectedPageNumber ?? 1).toDouble(),
+              min: 1,
+              max: widget.pdf.totalPages.toDouble(),
+              divisions: widget.pdf.totalPages - 1,
+              label: 'Page ${_selectedPageNumber ?? 1}',
+              onChanged: (value) {
+                setState(() {
+                  _selectedPageNumber = value.toInt();
+                });
+              },
+            ),
           ),
           Text(
             'Page ${_selectedPageNumber ?? 1} of ${widget.pdf.totalPages}',

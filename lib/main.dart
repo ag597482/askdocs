@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'config/api_config.dart';
 import 'providers/pdf_provider.dart';
 import 'providers/quiz_provider.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize API config to load saved base URL
+  await ApiConfig.initialize();
   runApp(const MainApp());
 }
 

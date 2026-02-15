@@ -3,7 +3,11 @@ import '../models/quiz_response.dart';
 import '../services/api_service.dart';
 
 class QuizProvider with ChangeNotifier {
-  final ApiService _apiService = ApiService();
+  ApiService _apiService = ApiService();
+  
+  void _refreshApiService() {
+    _apiService = ApiService();
+  }
 
   QuizResponse? _currentQuiz;
   Map<int, String> _userAnswers = {}; // question index -> user answer
@@ -107,5 +111,9 @@ class QuizProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  void refreshApiService() {
+    _refreshApiService();
   }
 }

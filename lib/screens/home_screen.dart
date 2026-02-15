@@ -5,6 +5,7 @@ import '../widgets/pdf_card.dart';
 import '../widgets/loading_shimmer.dart';
 import 'upload_screen.dart';
 import 'pdf_detail_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,7 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Book Summarizer'),
+        title: GestureDetector(
+          onLongPress: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SettingsScreen(),
+              ),
+            ).then((_) {
+              // Refresh PDF list after settings change
+              context.read<PDFProvider>().fetchPDFs();
+            });
+          },
+          child: const Text('Book Summarizer'),
+        ),
         elevation: 0,
       ),
       body: Consumer<PDFProvider>(

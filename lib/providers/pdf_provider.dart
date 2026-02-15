@@ -3,7 +3,11 @@ import '../models/pdf_info.dart';
 import '../services/api_service.dart';
 
 class PDFProvider with ChangeNotifier {
-  final ApiService _apiService = ApiService();
+  ApiService _apiService = ApiService();
+  
+  void _refreshApiService() {
+    _apiService = ApiService();
+  }
 
   List<PDFInfo> _pdfs = [];
   bool _isLoading = false;
@@ -49,5 +53,9 @@ class PDFProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  void refreshApiService() {
+    _refreshApiService();
   }
 }
