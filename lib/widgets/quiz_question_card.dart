@@ -26,11 +26,13 @@ class QuizQuestionCard extends StatefulWidget {
 
 class _QuizQuestionCardState extends State<QuizQuestionCard> {
   late String? _selectedAnswer;
+  late TextEditingController _textController;
 
   @override
   void initState() {
     super.initState();
     _selectedAnswer = widget.userAnswer;
+    _textController = TextEditingController(text: widget.userAnswer ?? '');
   }
 
   @override
@@ -38,7 +40,17 @@ class _QuizQuestionCardState extends State<QuizQuestionCard> {
     super.didUpdateWidget(oldWidget);
     if (widget.userAnswer != oldWidget.userAnswer) {
       _selectedAnswer = widget.userAnswer;
+      // Only update controller if the value actually changed externally
+      if (_textController.text != (widget.userAnswer ?? '')) {
+        _textController.text = widget.userAnswer ?? '';
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
   }
 
   @override
@@ -303,6 +315,7 @@ class _QuizQuestionCardState extends State<QuizQuestionCard> {
   Widget _buildShortAnswerInput(ThemeData theme, bool showResult) {
     return TextField(
       enabled: !showResult,
+      controller: _textController,
       decoration: InputDecoration(
         hintText: 'Type your answer here...',
         border: OutlineInputBorder(
@@ -313,7 +326,6 @@ class _QuizQuestionCardState extends State<QuizQuestionCard> {
         _selectedAnswer = value;
         widget.onAnswerChanged(value);
       },
-      controller: TextEditingController(text: _selectedAnswer),
       maxLines: 3,
     );
   }
