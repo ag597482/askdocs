@@ -4,6 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/pdf_info.dart';
 import '../widgets/chapter_chip.dart';
 import '../services/api_service.dart';
+import '../services/tts_service.dart';
 import 'ask_screen.dart';
 import 'quiz_screen.dart';
 
@@ -18,11 +19,34 @@ class PDFDetailScreen extends StatefulWidget {
 
 class _PDFDetailScreenState extends State<PDFDetailScreen> {
   final _apiService = ApiService();
+  final _ttsService = TTSService();
   bool _isLoadingSummary = false;
   String? _summary;
   String? _summaryType;
   String? _summaryError;
   int? _selectedPageNumber;
+  bool _isTtsPlaying = false;
+  bool _isTtsPaused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ttsService.setOnStateChanged(() {
+      if (mounted) {
+        setState(() {
+          _isTtsPlaying = _ttsService.isPlaying;
+          _isTtsPaused = _ttsService.isPaused;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _ttsService.stop();
+    _ttsService.setOnStateChanged(null);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -248,11 +272,18 @@ class _PDFDetailScreenState extends State<PDFDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Full Summary',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Full Summary',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
+                        ),
+                        _buildTTSControls(_summary!),
+                      ],
                     ),
                     const Divider(),
                     MarkdownBody(data: _summary!),
@@ -365,11 +396,18 @@ class _PDFDetailScreenState extends State<PDFDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Page ${_selectedPageNumber ?? 1} Summary',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Page ${_selectedPageNumber ?? 1} Summary',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
+                        ),
+                        _buildTTSControls(_summary!),
+                      ],
                     ),
                     const Divider(),
                     MarkdownBody(data: _summary!),
@@ -491,13 +529,21 @@ class _PDFDetailScreenState extends State<PDFDetailScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Chapter: $chapter'),
+            title: Row(
+              children: [
+                Expanded(child: Text('Chapter: $chapter')),
+                _buildTTSControls(response.summary, isDialog: true),
+              ],
+            ),
             content: SingleChildScrollView(
               child: MarkdownBody(data: response.summary),
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  _ttsService.stop();
+                  Navigator.pop(context);
+                },
                 child: const Text('Close'),
               ),
             ],
@@ -529,6 +575,56 @@ class _PDFDetailScreenState extends State<PDFDetailScreen> {
           initialChapter: chapter,
         ),
       ),
+    );
+  }
+
+  Widget _buildTTSControls(String text, {bool isDialog = false}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_isTtsPlaying && !_isTtsPaused)
+          IconButton(
+            icon: const Icon(Icons.pause),
+            onPressed: () async {
+              await _ttsService.pause();
+              setState(() {
+                _isTtsPaused = true;
+              });
+            },
+            tooltip: 'Pause',
+          )
+        else if (_isTtsPaused)
+          IconButton(
+            icon: const Icon(Icons.play_arrow),
+            onPressed: () async {
+              await _ttsService.resume();
+              setState(() {
+                _isTtsPaused = false;
+              });
+            },
+            tooltip: 'Resume',
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.volume_up),
+            onPressed: () async {
+              await _ttsService.speak(text);
+            },
+            tooltip: 'Read aloud',
+          ),
+        if (_isTtsPlaying || _isTtsPaused)
+          IconButton(
+            icon: const Icon(Icons.stop),
+            onPressed: () async {
+              await _ttsService.stop();
+              setState(() {
+                _isTtsPlaying = false;
+                _isTtsPaused = false;
+              });
+            },
+            tooltip: 'Stop',
+          ),
+      ],
     );
   }
 }
