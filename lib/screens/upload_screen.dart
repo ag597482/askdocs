@@ -17,6 +17,10 @@ class _UploadScreenState extends State<UploadScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _nameFocusNode = FocusNode();
+  final _usernameFocusNode = FocusNode();
+  final _nameFieldKey = GlobalKey();
+  final _usernameFieldKey = GlobalKey();
   final _apiService = ApiService();
 
   // Only used on mobile platforms - using dynamic to avoid web compilation issues
@@ -27,10 +31,39 @@ class _UploadScreenState extends State<UploadScreen> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _nameFocusNode.addListener(_onNameFocusChange);
+    _usernameFocusNode.addListener(_onUsernameFocusChange);
+  }
+
+  @override
   void dispose() {
+    _nameFocusNode.removeListener(_onNameFocusChange);
+    _nameFocusNode.dispose();
+    _usernameFocusNode.removeListener(_onUsernameFocusChange);
+    _usernameFocusNode.dispose();
     _nameController.dispose();
     _usernameController.dispose();
     super.dispose();
+  }
+
+  void _onNameFocusChange() {
+    if (_nameFocusNode.hasFocus) _ensureFieldVisible(_nameFieldKey);
+  }
+
+  void _onUsernameFocusChange() {
+    if (_usernameFocusNode.hasFocus) _ensureFieldVisible(_usernameFieldKey);
+  }
+
+  void _ensureFieldVisible(GlobalKey key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final context = key.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(context, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+      }
+    });
   }
 
   Future<void> _pickFile() async {
@@ -248,39 +281,47 @@ class _UploadScreenState extends State<UploadScreen> {
               ),
               const SizedBox(height: 16),
               // Name Field
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'PDF Name *',
-                  hintText: 'Enter a unique name for this PDF',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.title),
+              Builder(
+                key: _nameFieldKey,
+                builder: (context) => TextFormField(
+                  controller: _nameController,
+                  focusNode: _nameFocusNode,
+                  decoration: const InputDecoration(
+                    labelText: 'PDF Name *',
+                    hintText: 'Enter a unique name for this PDF',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.title),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a name';
+                    }
+                    return null;
+                  },
+                  enabled: !_isUploading,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
-                enabled: !_isUploading,
               ),
               const SizedBox(height: 16),
               // Username Field
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(
-                  labelText: 'Username *',
-                  hintText: 'Enter your username',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+              Builder(
+                key: _usernameFieldKey,
+                builder: (context) => TextFormField(
+                  controller: _usernameController,
+                  focusNode: _usernameFocusNode,
+                  decoration: const InputDecoration(
+                    labelText: 'Username *',
+                    hintText: 'Enter your username',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a username';
+                    }
+                    return null;
+                  },
+                  enabled: !_isUploading,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a username';
-                  }
-                  return null;
-                },
-                enabled: !_isUploading,
               ),
               const SizedBox(height: 24),
               // Upload Progress

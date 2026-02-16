@@ -16,14 +16,35 @@ class _AskScreenState extends State<AskScreen> {
   final _apiService = ApiService();
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  final _inputFocusNode = FocusNode();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _inputFocusNode.addListener(_onInputFocusChange);
+  }
+
+  @override
   void dispose() {
+    _inputFocusNode.removeListener(_onInputFocusChange);
+    _inputFocusNode.dispose();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onInputFocusChange() {
+    if (_inputFocusNode.hasFocus && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final context = _inputFocusNode.context;
+        if (context != null) {
+          Scrollable.ensureVisible(context, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+        }
+      });
+    }
   }
 
   void _scrollToBottom() {
@@ -200,6 +221,7 @@ class _AskScreenState extends State<AskScreen> {
                     Expanded(
                       child: TextField(
                         controller: _messageController,
+                        focusNode: _inputFocusNode,
                         decoration: InputDecoration(
                           hintText: 'Type your question...',
                           border: OutlineInputBorder(
